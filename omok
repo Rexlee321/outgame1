@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>웹 오목 게임</title>
+  <style>
+    body {
+      text-align: center;
+      font-family: Arial, sans-serif;
+      background-color: #f5f5f5;
+    }
+
+    h1 {
+      margin-top: 20px;
+    }
+
+    #board {
+      margin: 20px auto;
+      display: grid;
+      grid-template-columns: repeat(15, 40px);
+      grid-template-rows: repeat(15, 40px);
+      width: 600px;
+      height: 600px;
+      border: 2px solid #333;
+    }
+
+    .cell {
+      width: 40px;
+      height: 40px;
+      border: 1px solid #aaa;
+      background-color: #f0d9b5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .black {
+      width: 30px;
+      height: 30px;
+      background-color: black;
+      border-radius: 50%;
+    }
+
+    .white {
+      width: 30px;
+      height: 30px;
+      background-color: white;
+      border-radius: 50%;
+      box-shadow: 0 0 3px rgba(0, 0, 0, 0.6);
+    }
+
+    #status {
+      margin-top: 20px;
+      font-size: 18px;
+    }
+
+    #reset {
+      margin-top: 10px;
+      padding: 8px 16px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>🕹️ 웹 오목 게임</h1>
+  <div id="board"></div>
+  <div id="status">흑돌 차례입니다</div>
+  <button id="reset">다시 시작</button>
+
+  <script>
+    const SIZE = 15;
+    let board = Array.from({ length: SIZE }, () => Array(SIZE).fill(null));
+    let currentPlayer = 'black';
+    const boardElement = document.getElementById('board');
+    const statusElement = document.getElementById('status');
+    const resetButton = document.getElementById('reset');
+
+    function createBoard() {
+      boardElement.innerHTML = '';
+      for (let y = 0; y < SIZE; y++) {
+        for (let x = 0; x < SIZE; x++) {
+          const cell = document.createElement('div');
+          cell.classList.add('cell');
+          cell.dataset.x = x;
+          cell.dataset.y = y;
+          cell.addEventListener('click', handleCellClick);
+          boardElement.appendChild(cell);
+        }
+      }
+    }
+
+    function handleCellClick(e) {
+      const x = parseInt(e.target.dataset.x);
+      const y = parseInt(e.target.dataset.y);
+
+      if (board[y][x] !== null) return;
+
+      board[y][x] = currentPlayer;
+      const piece = document.createElement('div');
+      piece.classList.add(currentPlayer);
+      e.target.appendChild(piece);
+
+      if (checkWin(x, y)) {
+        statusElement.textContent = `${currentPlayer === 'black' ? '흑돌' : '백돌'} 승리!`;
+        boardElement.querySelectorAll('.cell').forEach(cell => {
+          cell.removeEventListener('click', handleCellClick);
+        });
+        return;
+      }
+
+      currentPlayer = currentPlayer === 'black' ? 'white' : 'black';
+      statusElement.textContent = `${currentPlayer === 'black' ? '흑돌' : '백돌'} 차례입니다`;
+    }
+
+    function checkWin(x, y) {
+      const directions = [
+        [1, 0],  // 가로
+        [0, 1],  // 세로
+        [1, 1],  // 대각 ↘
+        [1, -1]  // 대각 ↗
+      ];
+
+      for (const [dx, dy] of directions) {
+        let count = 1;
+
+        // 양방향 검사
+        for (let dir = -1; dir <= 1; dir += 2) {
+          let nx = x + dx * dir;
+          let ny = y + dy * dir;
+
+          while (
+            nx >= 0 && nx < SIZE &&
+            ny >= 0 && ny < SIZE &&
+            board[ny][nx] === currentPlayer
+          ) {
+            count++;
+            nx += dx * dir;
+            ny += dy * dir;
+          }
+        }
+
+        if (count >= 5) return true;
+      }
+
+      return false;
+    }
+
+    resetButton.addEventListener('click', () => {
+      board = Array.from({ length: SIZE }, () => Array(SIZE).fill(null));
+      currentPlayer = 'black';
+      statusElement.textContent = '흑돌 차례입니다';
+      createBoard();
+    });
+
+    createBoard();
+  </script>
+</body>
+</html>
